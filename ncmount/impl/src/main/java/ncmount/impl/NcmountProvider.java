@@ -75,6 +75,7 @@ import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.netconf.notification.
 import org.opendaylight.yang.gen.v1.urn.ietf.params.xml.ns.yang.ietf.inet.types.rev100924.IpAddress;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.netconf.node.topology.rev150114.NetconfNode;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.netconf.node.topology.rev150114.NetconfNodeFields.ConnectionStatus;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.netconf.node.topology.rev150114.netconf.node.fields.AvailableCapabilities;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.netconf.node.topology.rev150114.network.topology.topology.topology.types.TopologyNetconf;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.ncmount.rev150105.ListNodesOutput;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.ncmount.rev150105.ListNodesOutputBuilder;
@@ -117,7 +118,9 @@ import org.slf4j.LoggerFactory;
  */
 public class NcmountProvider implements DataChangeListener, NcmountService,
                                     BindingAwareProvider, AutoCloseable {
+
     private static final Logger LOG = LoggerFactory.getLogger(NcmountProvider.class);
+
     public static final InstanceIdentifier<Topology> NETCONF_TOPO_IID =
             InstanceIdentifier
             .create(NetworkTopology.class)
@@ -146,8 +149,9 @@ public class NcmountProvider implements DataChangeListener, NcmountService,
     public void onSessionInitiated(ProviderContext session) {
         LOG.info("NcmountProvider Session Initiated");
 
-        // Get references to the data broker and mount service
+        // Get a reference to the mount point service.
         this.mountService = session.getSALService(MountPointService.class);
+        // Get a reference to the data broker.
         this.dataBroker = session.getSALService(DataBroker.class);
 
         // Register ourselves as the REST API RPC implementation
@@ -160,6 +164,8 @@ public class NcmountProvider implements DataChangeListener, NcmountService,
         // is equivalent to the following URL:
         // .../restconf/operational/network-topology:network-topology/topology/topology-netconf
         if (dataBroker != null) {
+
+            LOG.info("NETCONF_TOPO_IID {}", NETCONF_TOPO_IID.toString());
             this.dclReg = dataBroker.registerDataChangeListener(LogicalDatastoreType.OPERATIONAL,
                     NETCONF_TOPO_IID.child(Node.class),
                     this,
@@ -232,6 +238,10 @@ public class NcmountProvider implements DataChangeListener, NcmountService,
         // '.../yang-ext:mount/Cisco-IOS-XR-ifmgr-cfg:interface-configurations'
         InstanceIdentifier<InterfaceConfigurations> iid =
                 InstanceIdentifier.create(InterfaceConfigurations.class);
+
+        //labry
+        InstanceIdentifier<AvailableCapabilities> avail_iid =
+                InstanceIdentifier.create(AvailableCapabilities.class);
 
         Optional<InterfaceConfigurations> ifConfig;
         try {
